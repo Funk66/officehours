@@ -255,8 +255,8 @@ class Calculator:
             while hours > 0:
                 if hours > self.work_day:
                     hours -= self.work_day
-                elif remaining < hours < self.work_day:
-                    hours -= self.work_day - remaining
+                elif remaining <= hours <= self.work_day:
+                    hours -= self.work_day
                 else:
                     break
                 from_time += self.one_day
@@ -281,8 +281,8 @@ class Calculator:
             while hours > 0:
                 if hours > self.work_day:
                     hours -= self.work_day
-                elif remaining < hours < self.work_day:
-                    hours -= self.work_day - remaining
+                elif remaining <= hours <= self.work_day:
+                    hours -= self.work_day
                 else:
                     break
                 deadline -= self.one_day
