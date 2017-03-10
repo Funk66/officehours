@@ -43,14 +43,16 @@ class Calculator:
         and the time from the second. The time can be given as a string or
         taken from another datetime object
 
-        :param datetime.datetime date: object containing the date (year, month and day)
+        :param datetime.datetime date: object containing the date
+            (year, month and day)
         :param str time: time to be set. E.g. '9:00'
         """
         seconds = self.seconds(time)
         hour = int(seconds/3600)
-        minute = int((seconds%3600)/60)
-        second = int((seconds%3600)%60)
-        return datetime.datetime(date.year, date.month, date.day, hour, minute, second)
+        minute = int((seconds % 3600)/60)
+        second = int((seconds % 3600) % 60)
+        return datetime.datetime(date.year, date.month, date.day,
+                                 hour, minute, second)
 
     def add_holidays(self, days):
         """ Adds one or more datetime objects to a list of bank holidays
@@ -70,9 +72,9 @@ class Calculator:
                     raise TypeError('{} is not a valid date type'.format(type(day)))
 
     def seconds(self, time):
-        """ Converts a time to seconds. The time can be provided as the number of
-        seconds since the beginning of the day; a string representing a time (e.g.
-        '12:30') or a datetime or date object.
+        """ Converts a time to seconds. The time can be provided as the number
+        of seconds since the beginning of the day; a string representing a time
+        (e.g. '12:30') or a datetime or date object.
 
         :param str int datetime time: time string in HH:MM format
         """
@@ -90,7 +92,8 @@ class Calculator:
 
     @staticmethod
     def validate(time):
-        """ Checks whether the string format is correct and returns it as a tuple of int
+        """ Checks whether the string format is correct and returns it as a
+        tuple of int
 
         :param str time: time string in HH:MM format
         """
@@ -169,9 +172,23 @@ class Calculator:
         """
         return (self.normalize(to_time) - self.normalize(from_time)) / 3600
 
+    def previous_office_close(self, day):
+        """ Returns a datetime object corresponding to the office closing time
+        of the previous working day
+
+        :param datetime.datetime day: datetime
+        """
+        if self.is_working_day(day) and self.seconds(day) > self.close:
+            return self.set_time(day, self.close)
+        else:
+            day -= self.one_day
+            while not self.is_working_day(day):
+                day -= self.one_day
+            return self.set_time(day, self.close)
+
     def next_office_open(self, day):
-        """ Returns a datetime object corresponding to the office
-        opening time of the next working day
+        """ Returns a datetime object corresponding to the office opening time
+        of the next working day
 
         :param datetime.datetime day: datetime
         """
@@ -227,10 +244,12 @@ class Calculator:
         """ Calculates the resulting datetime after a given number of working hours
 
         :param float hours: amount of working hours
-        :param datetime.datetime from_time: date from which the hours start counting
+        :param datetime.datetime from_time: date from which the hours start
+            counting. Defaults to the current datetime
         """
         if not self.is_working_time(from_time):
-            from_time = self.next_office_open(from_time or datetime.datetime.today())
+            from_time = self.next_office_open(from_time or
+                                              datetime.datetime.today())
         remaining = self.count(from_time, self.close)
         if hours > remaining:
             while hours > 0:
@@ -246,3 +265,41 @@ class Calculator:
 
         return from_time + datetime.timedelta(seconds=hours*3600)
 
+    def start_time(self, hours, deadline=None):
+        """ Calculates the starting datetime required to meet a deadline
+
+        :param float hours: amount of working hours
+        :param datetime.datetime deadline: datetime by which all working hours
+            must have been elapsed. Defaults to the current datetime
+        """
+        if not self.is_working_time(deadline):
+            deadline = self.previous_office_close(deadline or
+                                                  datetime.datetime.today())
+
+        remaining = self.count(self.start, deadline)
+        if hours > remaining:
+            while hours > 0:
+                if hours > self.work_day:
+                    hours -= self.work_day
+                elif remaining < hours < self.work_day:
+                    hours -= self.work_day - remaining
+                else:
+                    break
+                deadline -= self.one_day
+                while not self.is_working_day(deadline):
+                    deadline -= self.one_day
+
+        return deadline - datetime.timedelta(seconds=hours*3600)
+
+    def find_date(self, hours, from_time=None):
+        """ Same as calculating the due date, but accepts a negative number of
+        working hours, in which case the start time is calculated instead
+
+        :param float hours: amount of working hours
+        :param datetime.datetime from_time: date from which the hours start
+            counting. Defaults to the current datetime
+        """
+        if hours >= 0:
+            return self.due_date(hours, from_time)
+        elif hours < 0:
+            return self.start_time(-hours, from_time)

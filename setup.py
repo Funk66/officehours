@@ -9,7 +9,7 @@ try:
 except ImportError:
     from distutils.core import setup
 
-__version__ = '0.1.5'
+__version__ = '0.1.6'
 
 if sys.argv[-1] == 'publish':
     os.system('python setup.py sdist bdist_wheel upload')
@@ -21,7 +21,7 @@ if sys.argv[-1] == 'publish':
 setup(
     name = 'officehours',
     packages = ['officehours'],
-    version = '0.1.5',
+    version = '0.1.6',
     description = 'Utility to calculate time intervals in working hours',
     author = 'Guillermo Guirao Aguilar',
     author_email = 'contact@guillermoguiraoaguilar.com',

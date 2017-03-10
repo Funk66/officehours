@@ -82,6 +82,10 @@ class TestDate(unittest.TestCase):
         self.assertEqual(34200, self.calculator.normalize(new_years_eve_morning))
         self.assertEqual(61200, self.calculator.normalize(new_years_eve_late))
 
+    def test_previous_office_close(self):
+        self.assertEqual(datetime.datetime(2015, 12, 31, 17, 0), self.calculator.previous_office_close(sunday_afternoon))
+        self.assertEqual(datetime.datetime(2015, 12, 31, 17, 0), self.calculator.previous_office_close(monday_noon))
+
     def test_next_office_open(self):
         self.assertEqual(monday_morning, self.calculator.next_office_open(new_years_eve_morning))
         self.assertEqual(monday_morning, self.calculator.next_office_open(new_year))
@@ -113,6 +117,14 @@ class TestDate(unittest.TestCase):
         self.assertEqual(new_years_eve_morning, self.calculator.due_date(0.5, new_years_eve_early))
         self.assertEqual(monday_noon, self.calculator.due_date(10.5, new_years_eve_morning))
 
+    def test_start_time(self):
+        self.assertEqual(new_years_eve_morning, self.calculator.start_time(10.5, monday_noon))
+        self.assertEqual(monday_noon, self.calculator.start_time(5, tuesday_early))
+
+    def test_find_date(self):
+        self.assertEqual(monday_noon, self.calculator.find_date(-5, tuesday_early))
+        self.assertEqual(monday_noon, self.calculator.find_date(0, monday_noon))
+        self.assertEqual(monday_morning, self.calculator.find_date(0, monday_early))
 
 if __name__ == "__main__":
     unittest.main()
