@@ -36,11 +36,15 @@ class TestDate(unittest.TestCase):
 
     def test_add_holidays(self):
         self.assertEqual([new_year], self.calculator.holidays)
+        with self.assertRaises(TypeError):
+            self.calculator.add_holidays([0])
 
     def test_seconds(self):
         self.assertEqual(0, self.calculator.seconds(monday))
         self.assertEqual(32400, self.calculator.seconds('9:00'))
         self.assertEqual(32400, self.calculator.seconds(monday_morning))
+        with self.assertRaises(TypeError):
+            self.calculator.seconds(self.calculator)
 
     def test_validate(self):
         self.assertEqual((0, 0), self.calculator.validate('0:00'))
@@ -53,6 +57,8 @@ class TestDate(unittest.TestCase):
 
     def test_date(self):
         self.assertEqual(monday, self.calculator.date(monday_morning))
+        with self.assertRaises(TypeError):
+            self.calculator.date(0)
 
     def test_is_weekend(self):
         self.assertTrue(self.calculator.is_weekend(saturday))
@@ -85,6 +91,7 @@ class TestDate(unittest.TestCase):
     def test_previous_office_close(self):
         self.assertEqual(datetime.datetime(2015, 12, 31, 17, 0), self.calculator.previous_office_close(sunday_afternoon))
         self.assertEqual(datetime.datetime(2015, 12, 31, 17, 0), self.calculator.previous_office_close(monday_noon))
+        self.assertEqual(datetime.datetime(2016, 1, 4, 17, 0), self.calculator.previous_office_close(monday_late))
 
     def test_next_office_open(self):
         self.assertEqual(monday_morning, self.calculator.next_office_open(new_years_eve_morning))
