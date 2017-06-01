@@ -1,32 +1,24 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
-import sys
-
 try:
     from setuptools import setup
 except ImportError:
     from distutils.core import setup
 
-__version__ = '0.1.7'
 
-if sys.argv[-1] == 'publish':
-    os.system('python setup.py sdist bdist_wheel upload')
-    os.system('git tag -a {0} -m "v{0}"'.format(__version__))
-    os.system('git push --tags')
-    sys.exit()
+__version__ = '0.1.7'
 
 
 setup(
-    name = 'officehours',
-    packages = ['officehours'],
-    version = '0.1.7',
-    description = 'Utility to calculate time intervals in working hours',
-    author = 'Guillermo Guirao Aguilar',
-    author_email = 'contact@guillermoguiraoaguilar.com',
-    url = 'https://github.com/Funk66/officehours.git',
-    keywords = ['time', 'hours', 'office', 'business', 'work'],
+    name='officehours',
+    packages=['officehours'],
+    version='0.1.7',
+    description='Utility to calculate time intervals in working hours',
+    author='Guillermo Guirao Aguilar',
+    author_email='contact@guillermoguiraoaguilar.com',
+    url='https://github.com/Funk66/officehours.git',
+    keywords=['time', 'hours', 'office', 'business', 'work'],
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Natural Language :: English',
