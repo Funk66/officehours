@@ -1,19 +1,23 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from os import path
 try:
     from setuptools import setup
 except ImportError:
     from distutils.core import setup
 
 
-__version__ = '0.1.7'
+def version():
+    init = path.join(path.dirname(__file__), 'officehours', '__init__.py')
+    line = list(filter(lambda l: l.startswith('__version__'), open(init)))[0]
+    return line.split('=')[-1].strip(" '\"\n")
 
 
 setup(
     name='officehours',
     packages=['officehours'],
-    version='0.1.7',
+    version=version(),
     description='Utility to calculate time intervals in working hours',
     author='Guillermo Guirao Aguilar',
     author_email='contact@guillermoguiraoaguilar.com',

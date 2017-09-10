@@ -35,7 +35,7 @@ class TestDate(unittest.TestCase):
         self.assertEqual(monday_morning, self.calculator.set_time(monday_early, self.calculator.start))
 
     def test_add_holidays(self):
-        self.assertEqual([new_year], self.calculator.holidays)
+        self.assertEqual({new_year}, self.calculator.holidays)
         with self.assertRaises(TypeError):
             self.calculator.add_holidays([0])
 
@@ -132,6 +132,7 @@ class TestDate(unittest.TestCase):
         self.assertEqual(monday_noon, self.calculator.find_date(-5, tuesday_early))
         self.assertEqual(monday_noon, self.calculator.find_date(0, monday_noon))
         self.assertEqual(monday_morning, self.calculator.find_date(0, monday_early))
+
 
 if __name__ == "__main__":
     unittest.main()
