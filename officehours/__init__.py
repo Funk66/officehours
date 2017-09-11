@@ -9,7 +9,7 @@ from datetime import timedelta
 
 __author__ = 'Guillermo Guirao Aguilar'
 __email__ = 'contact@guillermoguiraoaguilar.com'
-__version__ = '0.1.8'
+__version__ = '0.1.9'
 
 
 class TimeFormatError(Exception):
@@ -27,10 +27,7 @@ class Calculator:
         self.start = self.seconds(start)
         self.close = self.seconds(close)
         self.one_day = timedelta(days=1)
-        self.holidays = set()
-        if holidays:
-            for day in holidays:
-                self.add_holidays(day)
+        self.holidays = set([self.date(day) for day in holidays or []])
 
     def set_time(self, date, time):
         """ Returns a datetime object with the date from the first parameter
@@ -51,12 +48,7 @@ class Calculator:
 
         :param datetime date day: holiday dates
         """
-        if isinstance(day, date):
-            self.holidays.add(day)
-        elif isinstance(day, datetime):
-            self.holidays.add(day.date())
-        else:
-            raise TypeError('{} is not a valid date type'.format(type(day)))
+        self.holidays.add(self.date(day))
 
     def seconds(self, time):
         """ Converts a time to seconds. The time can be provided as the number
@@ -92,12 +84,12 @@ class Calculator:
 
     @property
     def work_day(self):
-        """ Returns the amount of working hours per day """
-        return (self.close - self.start) / 3600
+        """ Returns the amount of working seconds per day """
+        return self.close - self.start
 
     @staticmethod
     def date(day):
-        """ Ensures that a date is a datetime.date instance """
+        """ Ensures that `day` is an instance of datetime.date """
         if isinstance(day, datetime):
             return day.date()
         elif isinstance(day, date):
@@ -158,7 +150,7 @@ class Calculator:
         :param datetime from_time: initial datetime
         :param datetime to_time: final datetime
         """
-        return (self.normalize(to_time) - self.normalize(from_time)) / 3600
+        return self.normalize(to_time) - self.normalize(from_time)
 
     def previous_office_close(self, day):
         """ Returns a datetime object corresponding to the office closing time
@@ -203,8 +195,8 @@ class Calculator:
             from_date += self.one_day
         return days
 
-    def working_hours(self, from_time, to_time=None):
-        """ Returns the number of working hours between two dates
+    def working_seconds(self, from_time, to_time=None):
+        """ Returns the number of working seconds between two dates
 
         :param datetime from_time: initial date
         :param datetime to_time: final date. Defaults to current time
@@ -216,17 +208,25 @@ class Calculator:
         if from_date == to_date and self.is_working_day(from_date):
             return max(self.count(from_time, to_time), 0)
         elif from_date < to_date:
-            hours = 0
+            seconds = 0
             if self.is_working_time(from_time):
-                hours += self.count(from_time, self.close)
+                seconds += self.count(from_time, self.close)
             from_time = self.next_office_open(from_time)
             while self.date(from_time) < self.date(to_time):
-                hours += self.work_day
+                seconds += self.work_day
                 from_time = self.next_office_open(from_time)
             if self.is_working_day(to_time):
-                hours += self.count(self.start, to_time)
-            return hours
+                seconds += self.count(self.start, to_time)
+            return seconds
         return 0
+
+    def working_hours(self, from_time, to_time=None):
+        """ Returns the number of working hours between two dates
+
+        :param datetime from_time: initial date
+        :param datetime to_time: final date. Defaults to current time
+        """
+        return self.working_seconds(from_time, to_time) / 3600.0
 
     def due_date(self, hours, from_time=None):
         """ Calculates the resulting datetime after a given number of working hours
@@ -238,19 +238,20 @@ class Calculator:
         if not self.is_working_time(from_time):
             from_time = self.next_office_open(from_time or datetime.today())
         remaining = self.count(from_time, self.close)
-        if hours > remaining:
-            while hours > 0:
-                if hours > self.work_day:
-                    hours -= self.work_day
-                elif remaining <= hours <= self.work_day:
-                    hours -= self.work_day
+        seconds = hours * 3600
+        if seconds > remaining:
+            while seconds > 0:
+                if seconds > self.work_day:
+                    seconds -= self.work_day
+                elif remaining <= seconds <= self.work_day:
+                    seconds -= self.work_day
                 else:
                     break
                 from_time += self.one_day
                 while not self.is_working_day(from_time):
                     from_time += self.one_day
 
-        return from_time + timedelta(seconds=hours*3600)
+        return from_time + timedelta(seconds=seconds)
 
     def start_time(self, hours, deadline=None):
         """ Calculates the starting datetime required to meet a deadline
@@ -261,21 +262,21 @@ class Calculator:
         """
         if not self.is_working_time(deadline):
             deadline = self.previous_office_close(deadline or datetime.today())
-
         remaining = self.count(self.start, deadline)
-        if hours > remaining:
-            while hours > 0:
-                if hours > self.work_day:
-                    hours -= self.work_day
-                elif remaining <= hours <= self.work_day:
-                    hours -= self.work_day
+        seconds = hours * 3600
+        if seconds > remaining:
+            while seconds > 0:
+                if seconds > self.work_day:
+                    seconds -= self.work_day
+                elif remaining <= seconds <= self.work_day:
+                    seconds -= self.work_day
                 else:
                     break
                 deadline -= self.one_day
                 while not self.is_working_day(deadline):
                     deadline -= self.one_day
 
-        return deadline - timedelta(seconds=hours*3600)
+        return deadline - timedelta(seconds=seconds)
 
     def find_date(self, hours, from_time=None):
         """ Same as calculating the due date, but accepts a negative number of

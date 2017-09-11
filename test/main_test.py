@@ -53,7 +53,7 @@ class TestDate(unittest.TestCase):
             self.calculator.validate('24:00')
 
     def test_work_day(self):
-        self.assertEqual(8, self.calculator.work_day)
+        self.assertEqual(8*3600, self.calculator.work_day)
 
     def test_date(self):
         self.assertEqual(monday, self.calculator.date(monday_morning))
@@ -99,14 +99,26 @@ class TestDate(unittest.TestCase):
         self.assertEqual(monday_morning, self.calculator.next_office_open(monday_early))
 
     def test_count(self):
-        self.assertEqual(7.75, self.calculator.count('8:00', '16:45'))
-        self.assertEqual(7.5, self.calculator.count(new_years_eve_morning, new_years_eve_late))
+        self.assertEqual(7.75*3600, self.calculator.count('8:00', '16:45'))
+        self.assertEqual(7.5*3600, self.calculator.count(new_years_eve_morning, new_years_eve_late))
 
     def test_working_days(self):
         self.assertEqual(1, self.calculator.working_days(new_years_eve, sunday))
         self.assertEqual(1, self.calculator.working_days(new_years_eve, monday))
         self.assertEqual(0, self.calculator.working_days(monday, monday))
         self.assertEqual(1, self.calculator.working_days(monday, tuesday))
+
+    def test_working_seconds(self):
+        self.assertEqual(0.5*3600, self.calculator.working_seconds(new_years_eve_early, new_years_eve_morning))
+        self.assertEqual(8*3600, self.calculator.working_seconds(new_years_eve_early, new_years_eve_late))
+        self.assertEqual(0, self.calculator.working_seconds(new_years_eve_late, monday_early))
+        self.assertEqual(8*3600, self.calculator.working_seconds(new_years_eve_late, monday_late))
+        self.assertEqual(8*3600, self.calculator.working_seconds(new_years_eve_early, monday_morning))
+        self.assertEqual(0, self.calculator.working_seconds(saturday, sunday))
+        self.assertEqual(0, self.calculator.working_seconds(sunday, sunday))
+        self.assertEqual(0, self.calculator.working_seconds(sunday, saturday))
+        self.assertEqual(0, self.calculator.working_seconds(sunday_morning, sunday_afternoon))
+        self.assertEqual(8*3600, self.calculator.working_seconds(new_years_eve_late, tuesday_early))
 
     def test_working_hours(self):
         self.assertEqual(0.5, self.calculator.working_hours(new_years_eve_early, new_years_eve_morning))
