@@ -5,11 +5,14 @@ import re
 from datetime import date
 from datetime import datetime
 from datetime import timedelta
-
+from typing import List, Tuple, Set, Union
 
 __author__ = 'Guillermo Guirao Aguilar'
 __email__ = 'contact@guillermoguiraoaguilar.com'
-__version__ = '0.1.9'
+__version__ = '0.2.0'
+
+Date = date
+Time = Union[str, int, datetime, Date]
 
 
 class TimeFormatError(Exception):
@@ -17,7 +20,10 @@ class TimeFormatError(Exception):
 
 
 class Calculator:
-    def __init__(self, start='9:00', close='17:00', holidays=None):
+    def __init__(self,
+                 start: str = '9:00',
+                 close: str = '17:00',
+                 holidays: List[datetime] = None):
         """ Initialize the class
 
         :param str start: office opening time
@@ -27,9 +33,13 @@ class Calculator:
         self.start = self.seconds(start)
         self.close = self.seconds(close)
         self.one_day = timedelta(days=1)
-        self.holidays = set([self.date(day) for day in holidays or []])
+        self.holidays: Set[Date] = set(
+            [self.date(day) for day in holidays or []])
 
-    def set_time(self, date, time):
+    def __repr__(self) -> str:
+        return f'Calculator(start="{self.start}", close="{self.close}")'
+
+    def set_time(self, date: datetime, time: Time) -> datetime:
         """ Returns a datetime object with the date from the first parameter
         and the time from the second. The time can be given as a string or
         taken from another datetime object
@@ -43,14 +53,14 @@ class Calculator:
         second = int((seconds % 3600) % 60)
         return datetime(date.year, date.month, date.day, hour, minute, second)
 
-    def add_holidays(self, day):
+    def add_holidays(self, day: datetime) -> None:
         """ Adds one or more datetime objects to a list of bank holidays
 
         :param datetime date day: holiday dates
         """
         self.holidays.add(self.date(day))
 
-    def seconds(self, time):
+    def seconds(self, time: Time) -> int:
         """ Converts a time to seconds. The time can be provided as the number
         of seconds since the beginning of the day; a string representing a time
         (e.g. '12:30') or a datetime or date object.
@@ -70,7 +80,7 @@ class Calculator:
             raise TypeError('{} is not a valid time'.format(type(time)))
 
     @staticmethod
-    def validate(time):
+    def validate(time: str) -> Tuple[int, int]:
         """ Checks whether the string format is correct and returns it as a
         tuple of int
 
@@ -83,12 +93,12 @@ class Calculator:
         raise TimeFormatError('{} is not a valid time format'.format(time))
 
     @property
-    def work_day(self):
+    def work_day(self) -> int:
         """ Returns the amount of working seconds per day """
         return self.close - self.start
 
     @staticmethod
-    def date(day):
+    def date(day: Union[datetime, Date]) -> Date:
         """ Ensures that `day` is an instance of datetime.date """
         if isinstance(day, datetime):
             return day.date()
@@ -98,28 +108,28 @@ class Calculator:
             raise TypeError("{} is not a datetime object".format(type(day)))
 
     @staticmethod
-    def is_weekend(day):
+    def is_weekend(day: Union[datetime, Date]) -> bool:
         """ Returns True if `day` is a weekend day
 
         :param datetime.date day: date
         """
         return day.isoweekday() in [6, 7]
 
-    def is_holiday(self, day):
+    def is_holiday(self, day: Union[datetime, Date]) -> bool:
         """ Returns True if `day` is a bank holiday
 
         :param datetime.date day: date
         """
         return self.date(day) in self.holidays
 
-    def is_working_day(self, day):
+    def is_working_day(self, day: Union[datetime, Date]) -> bool:
         """ Returns True if `day` is a working day
 
         :param datetime.date day: date
         """
         return not (self.is_weekend(day) or self.is_holiday(day))
 
-    def is_working_time(self, day):
+    def is_working_time(self, day: Union[datetime, Date]) -> bool:
         """ Returns True if `day` is working time
 
         :param datetime day: datetime
@@ -129,7 +139,7 @@ class Calculator:
                 return True
         return False
 
-    def normalize(self, time):
+    def normalize(self, time: Time) -> int:
         """ If `time` is out of office hours, returns
         the closest working time. Do nothing otherwise
 
@@ -143,7 +153,7 @@ class Calculator:
         else:
             return time
 
-    def count(self, from_time, to_time):
+    def count(self, from_time: Time, to_time: Time) -> int:
         """ Returns the number of hours elapsed between two times.
         Dates are not relevant
 
@@ -152,7 +162,7 @@ class Calculator:
         """
         return self.normalize(to_time) - self.normalize(from_time)
 
-    def previous_office_close(self, day):
+    def previous_office_close(self, day: datetime) -> datetime:
         """ Returns a datetime object corresponding to the office closing time
         of the previous working day
 
@@ -166,7 +176,7 @@ class Calculator:
                 day -= self.one_day
             return self.set_time(day, self.close)
 
-    def next_office_open(self, day):
+    def next_office_open(self, day: datetime) -> datetime:
         """ Returns a datetime object corresponding to the office opening time
         of the next working day
 
@@ -180,7 +190,9 @@ class Calculator:
                 day += self.one_day
             return self.set_time(day, self.start)
 
-    def working_days(self, from_date, to_date=None):
+    def working_days(self,
+                     from_date: Union[datetime, Date],
+                     to_date: Union[datetime, Date] = None) -> int:
         """ Returns the number of working days between two dates
 
         :param datetime from_date: initial date
@@ -195,7 +207,8 @@ class Calculator:
             from_date += self.one_day
         return days
 
-    def working_seconds(self, from_time, to_time=None):
+    def working_seconds(self, from_time: datetime,
+                        to_time: datetime = None) -> int:
         """ Returns the number of working seconds between two dates
 
         :param datetime from_time: initial date
@@ -220,7 +233,8 @@ class Calculator:
             return seconds
         return 0
 
-    def working_hours(self, from_time, to_time=None):
+    def working_hours(self, from_time: datetime,
+                      to_time: datetime = None) -> float:
         """ Returns the number of working hours between two dates
 
         :param datetime from_time: initial date
@@ -228,13 +242,15 @@ class Calculator:
         """
         return self.working_seconds(from_time, to_time) / 3600.0
 
-    def due_date(self, hours, from_time=None):
+    def due_date(self, hours: float, from_time: datetime = None) -> datetime:
         """ Calculates the resulting datetime after a given number of working hours
 
         :param float hours: amount of working hours
         :param datetime from_time: date from which the hours start
             counting. Defaults to the current datetime
         """
+        if not from_time:
+            from_time = datetime.today()
         if not self.is_working_time(from_time):
             from_time = self.next_office_open(from_time or datetime.today())
         remaining = self.count(from_time, self.close)
@@ -253,13 +269,15 @@ class Calculator:
 
         return from_time + timedelta(seconds=seconds)
 
-    def start_time(self, hours, deadline=None):
+    def start_time(self, hours: float, deadline: datetime = None) -> datetime:
         """ Calculates the starting datetime required to meet a deadline
 
         :param float hours: amount of working hours
         :param datetime deadline: datetime by which all working hours
             must have been elapsed. Defaults to the current datetime
         """
+        if not deadline:
+            deadline = datetime.today()
         if not self.is_working_time(deadline):
             deadline = self.previous_office_close(deadline or datetime.today())
         remaining = self.count(self.start, deadline)
@@ -278,7 +296,7 @@ class Calculator:
 
         return deadline - timedelta(seconds=seconds)
 
-    def find_date(self, hours, from_time=None):
+    def find_date(self, hours: float, from_time: datetime = None) -> datetime:
         """ Same as calculating the due date, but accepts a negative number of
         working hours, in which case the start time is calculated instead
 
@@ -288,5 +306,5 @@ class Calculator:
         """
         if hours >= 0:
             return self.due_date(hours, from_time)
-        elif hours < 0:
+        else:
             return self.start_time(-hours, from_time)
