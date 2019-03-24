@@ -86,7 +86,7 @@ class Calculator:
 
         :param str time: time string in HH:MM format
         """
-        if re.match('^\d?\d:\d\d$', time):
+        if re.match(r'^\d?\d:\d\d$', time):
             hours, minutes = [int(n) for n in time.split(':')]
             if 0 <= hours < 24 and 0 <= minutes < 60:
                 return hours, minutes
